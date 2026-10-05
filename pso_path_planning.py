@@ -140,3 +140,62 @@ def run_pso(start, goal, obstacles):
         history.append(gbest_cost)
                     
     return gbest_pos, gbest_cost, history
+
+
+
+def plot_result(obstacles, start, goal, path, history):
+    fig1, ax1 = plt.subplots(figsize=(7, 7))
+    for (x, y) in obstacles:
+        ax1.add_patch(plt.Rectangle((x - 0.5, y - 0.5), 1, 1, color="black"))
+        
+    xs = [p[0] for p in path]
+    ys = [p[1] for p in path]
+    ax1.plot(xs, ys, color="royalblue", linewidth=2.5, label="PSO Path")
+    ax1.scatter(xs[1:-1], ys[1:-1], color="orange", s=50, zorder=4, label="Waypoints")
+
+    # explicitly marking the start and goal cells 
+    ax1.scatter(*start, color="green", s=150, zorder=5, label="Start")
+    ax1.scatter(*goal, color="red", s=150, zorder=5, marker="*", label="Goal")
+    
+    ax1.set_xlim(-0.5, GRID_SIZE - 0.5)
+    ax1.set_ylim(-0.5, GRID_SIZE - 0.5)
+    ax1.grid(True, color="lightgray", linestyle="--")
+    ax1.legend(loc="upper right")
+    ax1.set_title(f"PSO Path Planning (Seed {SEED})")
+    fig1.savefig("pso_path.png")
+
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    ax2.plot(history, color="purple", linewidth=2)
+    ax2.set_xlabel("Iteration")
+    ax2.set_ylabel("Best Cost")
+    ax2.set_title("PSO Convergence")
+    ax2.grid(True)
+    fig2.savefig("pso_convergence.png")
+    
+    plt.show()
+
+def main():
+    obstacles, start, goal = generate_problem()
+    print(f"Seed: {SEED} | Start: {start} | Goal: {goal}")
+    
+    best_pos, best_cost, history = run_pso(start, goal, obstacles)
+    best_path = decode_particle(best_pos, start, goal)
+    
+    
+    collisions = count_collisions_sampling(best_path, obstacles)
+    length = path_length(best_path)
+    
+    print(f"\n--- RESULTS ---")
+    print(f"Total Collisions: {collisions}")
+    print(f"Path Length: {length:.3f}")
+    print(f"Final Cost (Fitness): {best_cost:.3f}")
+    
+    if collisions == 0:
+        print("Verdict: Obstacle-free path found!")
+    else:
+        print("Verdict: Path still has collisions.")
+        
+    plot_result(obstacles, start, goal, best_path, history)
+
+if __name__ == "__main__":
+    main()
