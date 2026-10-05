@@ -29,3 +29,13 @@ I used Particle Swarm Optimization (PSO) with a continuous waypoint encoding:
 ```bash
 pip install matplotlib
 python pso_path_planning.py
+
+
+## Output
+Seed: 58 | Start: (4, 7) | Goal: (18, 5)
+
+--- RESULTS ---
+Total Collisions: 0
+Path Length: 14.443
+Final Cost (Fitness): 14.443
+Verdict: Obstacle-free path found!
