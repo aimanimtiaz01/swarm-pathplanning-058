@@ -30,6 +30,7 @@ I used Particle Swarm Optimization (PSO) with a continuous waypoint encoding:
 pip install matplotlib
 python pso_path_planning.py
 
+```
 
 ## Output
 Seed: 58 | Start: (4, 7) | Goal: (18, 5)
