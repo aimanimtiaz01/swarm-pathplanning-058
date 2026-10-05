@@ -52,3 +52,41 @@ def generate_problem():
         far_enough = math.dist(start, goal) >= GRID_SIZE * 0.6
         if far_enough and is_reachable(obstacles, start, goal):
             return obstacles, start, goal
+
+
+
+def decode_particle(position, start, goal):
+    waypoints = []
+    for i in range(0, len(position), 2):
+
+# taking the flat array of particle numbers and grouping them into proper (x, y) coordinates for the grid
+        waypoints.append((position[i], position[i+1]))
+    return [start] + waypoints + [goal]
+
+def count_collisions_sampling(path_points, obstacles):
+    hits = 0
+    for i in range(len(path_points) - 1):
+        x1, y1 = path_points[i]
+        x2, y2 = path_points[i+1]
+        dist = math.dist((x1, y1), (x2, y2))
+
+# breaking the line segment into tiny mathematical steps to check if any of those points fall inside a blocked obstacle cell        
+        steps = max(2, int(dist * 4)) 
+        for step in range(steps + 1):
+            t = step / steps
+            px = x1 + t * (x2 - x1)
+            py = y1 + t * (y2 - y1)
+            
+            cell_x, cell_y = int(round(px)), int(round(py))
+            if (cell_x, cell_y) in obstacles:
+                hits += 1
+    return hits
+
+def path_length(path_points):
+    return sum(math.dist(path_points[i], path_points[i+1]) for i in range(len(path_points)-1))
+
+def fitness(position, start, goal, obstacles):
+    path = decode_particle(position, start, goal)
+
+# fitness score: real length of the path plus the heavy penalty if it hits anything. Lower is better.    
+    return path_length(path) + COLLISION_PENALTY * count_collisions_sampling(path, obstacles)
