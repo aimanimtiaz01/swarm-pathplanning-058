@@ -90,3 +90,53 @@ def fitness(position, start, goal, obstacles):
 
 # fitness score: real length of the path plus the heavy penalty if it hits anything. Lower is better.    
     return path_length(path) + COLLISION_PENALTY * count_collisions_sampling(path, obstacles)
+
+
+def run_pso(start, goal, obstacles):
+    dim = NUM_WAYPOINTS * 2
+    lower, upper = 0.0, GRID_SIZE - 1.0
+    v_max = 0.2 * (upper - lower)
+
+    positions, velocities, pbest_pos, pbest_cost = [], [], [], []
+    
+    for _ in range(SWARM_SIZE):
+        pos = [random.uniform(lower, upper) for _ in range(dim)]
+        vel = [random.uniform(-v_max, v_max) for _ in range(dim)]
+        positions.append(pos)
+        velocities.append(vel)
+        pbest_pos.append(pos[:])
+        pbest_cost.append(fitness(pos, start, goal, obstacles))
+
+    best_i = min(range(SWARM_SIZE), key=lambda i: pbest_cost[i])
+    gbest_pos = pbest_pos[best_i][:]
+    gbest_cost = pbest_cost[best_i]
+    
+    history = [gbest_cost]
+
+    for it in range(MAX_ITERATIONS):
+        # # slowly decreasing inertia over time so particles explore the grid first, then settle down to exploit the best path at the end
+        w = W_START - (W_START - W_END) * (it / (MAX_ITERATIONS - 1))
+        for i in range(SWARM_SIZE):
+            for d in range(dim):
+                r1, r2 = random.random(), random.random()
+
+                # the main PSO formula: 'w' keeps its momentum, 'c1' pulls it towards its personal best, and 'c2' pulls it towards the swarm's global best
+                velocities[i][d] = (w * velocities[i][d] + 
+                                    C1 * r1 * (pbest_pos[i][d] - positions[i][d]) + 
+                                    C2 * r2 * (gbest_pos[d] - positions[i][d]))
+                
+                velocities[i][d] = max(-v_max, min(v_max, velocities[i][d]))
+
+                # clipping the coordinates so the particles don't fly off our 20x20 grid boundaries
+                positions[i][d] = max(lower, min(upper, positions[i][d] + velocities[i][d]))
+
+            cost = fitness(positions[i], start, goal, obstacles)
+            if cost < pbest_cost[i]:
+                pbest_cost[i] = cost
+                pbest_pos[i] = positions[i][:]
+                if cost < gbest_cost:
+                    gbest_cost = cost
+                    gbest_pos = positions[i][:]
+        history.append(gbest_cost)
+                    
+    return gbest_pos, gbest_cost, history
